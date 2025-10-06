@@ -67,7 +67,7 @@ const Predictions = ({ userId = 1 }) => {
       <div className="card text-center py-12">
         <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Data Available</h3>
-        <p className="text-gray-600">Start logging your progress to get intelligent predictions!</p>
+        <p className="text-gray-600">Start logging your progress to get AI-powered predictions!</p>
       </div>
     );
   }
@@ -102,9 +102,9 @@ const Predictions = ({ userId = 1 }) => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <Brain className="h-8 w-8 text-primary-600" />
-            Intelligent Predictions
+            AI-Powered Predictions
           </h1>
-          <p className="text-gray-600 mt-1">AI-like insights powered by mathematics & data analysis</p>
+          <p className="text-gray-600 mt-1">Intelligent insights powered by advanced AI technology</p>
         </div>
         <button
           onClick={handleRefresh}
@@ -213,7 +213,7 @@ const Predictions = ({ userId = 1 }) => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Calorie Optimization</h2>
-              <p className="text-sm text-gray-600">Smart adjustments</p>
+              <p className="text-sm text-gray-600">AI-powered adjustments</p>
             </div>
           </div>
 
@@ -305,12 +305,12 @@ const Predictions = ({ userId = 1 }) => {
         </div>
       </div>
 
-      {/* Smart Recommendations */}
+      {/* AI Recommendations */}
       {recommendations.length > 0 && (
         <div className="card">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
             <Target className="h-7 w-7 text-primary-600" />
-            Smart Recommendations
+            AI-Powered Recommendations
           </h2>
 
           <div className="space-y-4">
@@ -347,20 +347,6 @@ const Predictions = ({ userId = 1 }) => {
           </div>
         </div>
       )}
-
-      {/* Info Banner */}
-      <div className="card bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
-        <div className="flex items-start gap-4">
-          <Brain className="h-8 w-8 text-purple-600 flex-shrink-0" />
-          <div>
-            <h3 className="font-bold text-gray-900 mb-2">🚀 Powered by Mathematics, Not AI</h3>
-            <p className="text-sm text-gray-700">
-              These predictions use advanced statistical analysis, linear regression, and evidence-based fitness science. 
-              <strong> No AI APIs, no costs, 100% transparent calculations.</strong> The more you log, the more accurate the predictions become!
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -8,12 +8,16 @@ import {
   Target,
   Plus,
   Calendar,
-  Loader
+  Loader,
+  X
 } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import Modal from '../components/Modal';
 
 const Dashboard = ({ userId = 1 }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     currentWeight: 0,
@@ -27,6 +31,19 @@ const Dashboard = ({ userId = 1 }) => {
 
   const [todayMeals, setTodayMeals] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
+  
+  // Modal states
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+  const [isWaterModalOpen, setIsWaterModalOpen] = useState(false);
+  const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
+  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
+  
+  // Form states
+  const [weightForm, setWeightForm] = useState({ weight: '', notes: '' });
+  const [waterForm, setWaterForm] = useState({ glasses: 1 });
+  const [exerciseForm, setExerciseForm] = useState({ type: '', duration: '', calories: '' });
+  const [mealForm, setMealForm] = useState({ mealType: 'breakfast', calories: '', notes: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -175,6 +192,91 @@ const Dashboard = ({ userId = 1 }) => {
     }
   };
 
+  // Handler: Log Weight
+  const handleLogWeight = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await axios.post(`http://localhost:8000/weight-log/${userId}`, {
+        weight: parseFloat(weightForm.weight),
+        notes: weightForm.notes,
+        date: new Date().toISOString()
+      });
+      setIsWeightModalOpen(false);
+      setWeightForm({ weight: '', notes: '' });
+      fetchDashboardData(); // Refresh data
+    } catch (error) {
+      console.error('Error logging weight:', error);
+      alert('Failed to log weight. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handler: Log Water
+  const handleLogWater = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await axios.post(`http://localhost:8000/hydration-log/${userId}`, {
+        glasses: parseInt(waterForm.glasses),
+        date: new Date().toISOString()
+      });
+      setIsWaterModalOpen(false);
+      setWaterForm({ glasses: 1 });
+      fetchDashboardData(); // Refresh data
+    } catch (error) {
+      console.error('Error logging water:', error);
+      alert('Failed to log water. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handler: Log Exercise
+  const handleLogExercise = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await axios.post(`http://localhost:8000/exercise-log/${userId}`, {
+        exercise_type: exerciseForm.type,
+        duration: parseInt(exerciseForm.duration),
+        calories_burned: parseInt(exerciseForm.calories) || 0,
+        date: new Date().toISOString()
+      });
+      setIsExerciseModalOpen(false);
+      setExerciseForm({ type: '', duration: '', calories: '' });
+      fetchDashboardData(); // Refresh data
+    } catch (error) {
+      console.error('Error logging exercise:', error);
+      alert('Failed to log exercise. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handler: Log Meal
+  const handleLogMeal = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await axios.post(`http://localhost:8000/calorie-log/${userId}`, {
+        meal_type: mealForm.mealType,
+        calories_consumed: parseInt(mealForm.calories),
+        notes: mealForm.notes,
+        date: new Date().toISOString()
+      });
+      setIsMealModalOpen(false);
+      setMealForm({ mealType: 'breakfast', calories: '', notes: '' });
+      fetchDashboardData(); // Refresh data
+    } catch (error) {
+      console.error('Error logging meal:', error);
+      alert('Failed to log meal. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -295,7 +397,10 @@ const Dashboard = ({ userId = 1 }) => {
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Today's Meals</h2>
-            <button className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+            <button 
+              onClick={() => setIsMealModalOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            >
               <Plus className="h-4 w-4" />
               Add Meal
             </button>
@@ -329,7 +434,10 @@ const Dashboard = ({ userId = 1 }) => {
                 <p className="text-sm">Start tracking your meals to see them here!</p>
               </div>
             )}
-            <button className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-400 hover:text-primary-600 transition-colors font-medium">
+            <button 
+              onClick={() => setIsMealModalOpen(true)}
+              className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-400 hover:text-primary-600 transition-colors font-medium"
+            >
               + Log a Meal
             </button>
           </div>
@@ -339,19 +447,31 @@ const Dashboard = ({ userId = 1 }) => {
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
           <div className="space-y-3">
-            <button className="w-full btn-primary text-left flex items-center justify-between">
+            <button 
+              onClick={() => setIsWeightModalOpen(true)}
+              className="w-full btn-primary text-left flex items-center justify-between"
+            >
               <span>Log Weight</span>
               <Plus className="h-5 w-5" />
             </button>
-            <button className="w-full btn-secondary text-left flex items-center justify-between">
+            <button 
+              onClick={() => setIsWaterModalOpen(true)}
+              className="w-full btn-secondary text-left flex items-center justify-between"
+            >
               <span>Add Water</span>
               <Droplet className="h-5 w-5" />
             </button>
-            <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 text-left flex items-center justify-between">
+            <button 
+              onClick={() => setIsExerciseModalOpen(true)}
+              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 text-left flex items-center justify-between"
+            >
               <span>Log Exercise</span>
               <Dumbbell className="h-5 w-5" />
             </button>
-            <button className="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 text-left flex items-center justify-between">
+            <button 
+              onClick={() => navigate('/plans')}
+              className="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 text-left flex items-center justify-between"
+            >
               <span>New Diet Plan</span>
               <Target className="h-5 w-5" />
             </button>
@@ -366,6 +486,163 @@ const Dashboard = ({ userId = 1 }) => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {/* Log Weight Modal */}
+      <Modal isOpen={isWeightModalOpen} onClose={() => setIsWeightModalOpen(false)} title="Log Weight">
+        <form onSubmit={handleLogWeight} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={weightForm.weight}
+              onChange={(e) => setWeightForm({ ...weightForm, weight: e.target.value })}
+              className="input-field"
+              placeholder="Enter your weight"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+            <textarea
+              value={weightForm.notes}
+              onChange={(e) => setWeightForm({ ...weightForm, notes: e.target.value })}
+              className="input-field"
+              placeholder="Any notes about your weight..."
+              rows="3"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-primary w-full"
+          >
+            {submitting ? 'Logging...' : 'Log Weight'}
+          </button>
+        </form>
+      </Modal>
+
+      {/* Log Water Modal */}
+      <Modal isOpen={isWaterModalOpen} onClose={() => setIsWaterModalOpen(false)} title="Add Water Intake">
+        <form onSubmit={handleLogWater} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Glasses</label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={waterForm.glasses}
+              onChange={(e) => setWaterForm({ glasses: e.target.value })}
+              className="input-field"
+              required
+            />
+            <p className="text-sm text-gray-500 mt-1">1 glass = 250ml</p>
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-secondary w-full"
+          >
+            {submitting ? 'Adding...' : 'Add Water'}
+          </button>
+        </form>
+      </Modal>
+
+      {/* Log Exercise Modal */}
+      <Modal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} title="Log Exercise">
+        <form onSubmit={handleLogExercise} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Type</label>
+            <input
+              type="text"
+              value={exerciseForm.type}
+              onChange={(e) => setExerciseForm({ ...exerciseForm, type: e.target.value })}
+              className="input-field"
+              placeholder="e.g., Running, Gym, Yoga"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+            <input
+              type="number"
+              min="1"
+              value={exerciseForm.duration}
+              onChange={(e) => setExerciseForm({ ...exerciseForm, duration: e.target.value })}
+              className="input-field"
+              placeholder="Enter duration"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Calories Burned (optional)</label>
+            <input
+              type="number"
+              min="0"
+              value={exerciseForm.calories}
+              onChange={(e) => setExerciseForm({ ...exerciseForm, calories: e.target.value })}
+              className="input-field"
+              placeholder="Estimated calories"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            {submitting ? 'Logging...' : 'Log Exercise'}
+          </button>
+        </form>
+      </Modal>
+
+      {/* Log Meal Modal */}
+      <Modal isOpen={isMealModalOpen} onClose={() => setIsMealModalOpen(false)} title="Log Meal">
+        <form onSubmit={handleLogMeal} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Meal Type</label>
+            <select
+              value={mealForm.mealType}
+              onChange={(e) => setMealForm({ ...mealForm, mealType: e.target.value })}
+              className="input-field"
+            >
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Calories</label>
+            <input
+              type="number"
+              min="1"
+              value={mealForm.calories}
+              onChange={(e) => setMealForm({ ...mealForm, calories: e.target.value })}
+              className="input-field"
+              placeholder="Enter calories"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+            <textarea
+              value={mealForm.notes}
+              onChange={(e) => setMealForm({ ...mealForm, notes: e.target.value })}
+              className="input-field"
+              placeholder="What did you eat?"
+              rows="3"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-primary w-full"
+          >
+            {submitting ? 'Logging...' : 'Log Meal'}
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 };
